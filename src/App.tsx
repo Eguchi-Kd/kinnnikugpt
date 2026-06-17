@@ -19,6 +19,8 @@ export default function App() {
       if (!res.ok) throw new Error(`${res.status}`);
       const data = (await res.json()) as { answer: string };
       setAnswer(data.answer);
+    } catch {
+      setAnswer("ムキー");
     } finally {
       setLoading(false);
     }
