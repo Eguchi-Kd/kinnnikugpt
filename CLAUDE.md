@@ -4,7 +4,8 @@
 
 - **フレームワーク**: Vite + React + TypeScript
 - **パッケージ構成**: フロントエンド (`/`) と Cloudflare Workers (`/backend`) の2パッケージ構成
-- **ホスティング**: Cloudflare Pages (フロントエンド) + Cloudflare Workers (バックエンド)
+- **ホスティング**: Firebase Hosting (フロントエンド) + Cloudflare Workers (バックエンド)
+- **CI/CD**: GitHub Actions (`.github/workflows/deploy.yml`) — lint・テスト通過後に main マージで自動デプロイ
 
 ## パッケージ構成
 

@@ -1,0 +1,97 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────
+  # Lint・型チェック・テスト（PR時も実行）
+  # ─────────────────────────────────────────
+  ci:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Install backend deps
+        run: npm ci
+        working-directory: backend
+
+      - name: Typecheck backend
+        run: npm run typecheck
+        working-directory: backend
+
+  # ─────────────────────────────────────────
+  # Cloudflare Workers デプロイ（mainマージ後のみ）
+  # ─────────────────────────────────────────
+  deploy-workers:
+    name: Deploy → Cloudflare Workers
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install backend deps
+        run: npm ci
+        working-directory: backend
+
+      - name: Deploy via Wrangler
+        run: npm run deploy
+        working-directory: backend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  # ─────────────────────────────────────────
+  # Firebase Hosting デプロイ（mainマージ後のみ）
+  # ─────────────────────────────────────────
+  deploy-firebase:
+    name: Deploy → Firebase Hosting
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Deploy to Firebase Hosting
+        run: npx firebase-tools@latest deploy --only hosting --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
