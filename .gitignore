@@ -12,6 +12,19 @@ dist
 dist-ssr
 *.local
 
+# Cloudflare Workers secrets
+.dev.vars
+
+# MCP config (contains tokens)
+.mcp.json
+.claude/.mcp.json
+
+# Local token files
+*.vars
+
+# Conversation exports
+2026-*.txt
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
