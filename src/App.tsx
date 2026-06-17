@@ -2,19 +2,26 @@ import { useState } from "react";
 import styles from "./App.module.css";
 import QuestionForm from "./components/QuestionForm";
 import AnswerDisplay from "./components/AnswerDisplay";
-import { getMockAnswer } from "./utils/mockAnswer";
 
 export default function App() {
   const [answer, setAnswer] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(question: string) {
+  async function handleSubmit(question: string) {
     setLoading(true);
     setAnswer(null);
-    setTimeout(() => {
-      setAnswer(getMockAnswer(question));
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const data = (await res.json()) as { answer: string };
+      setAnswer(data.answer);
+    } finally {
       setLoading(false);
-    }, 400);
+    }
   }
 
   return (
